@@ -2,6 +2,7 @@ import requests
 import os
 from os.path import join, dirname
 from dotenv import load_dotenv
+import datetime as dt
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -37,8 +38,12 @@ def getTwitch():
         print('サムネイル: ' + str(response.json()['stream']['preview']['medium']))
         result.append(str(response.json()['stream']['preview']['medium']))
         #TODO:日付エンコードする
-        print('配信開始時間: ' + str(response.json()['stream']['channel']['updated_at']))
-        result.append(str(response.json()['stream']['channel']['updated_at']))
+        allDate = str(response.json()['stream']['channel']['updated_at'])
+        print('取得時間: ' + str(allDate))
+        tempDate = dt.datetime(int(allDate[0:4]),int(allDate[5:7]),int(allDate[8:10]),int(allDate[11:13]),int(allDate[14:16]),int(allDate[17:19]))
+        date = tempDate.strftime("%Y/%m/%d %H:%M 開始")
+        print('配信開始時間: ' + str(date))
+        result.append(str(date))
         print('ゲーム名: ' + str(response.json()['stream']['channel']['game']))
         result.append(str(response.json()['stream']['channel']['game']))
 
