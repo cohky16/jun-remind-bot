@@ -1,5 +1,5 @@
 import main
 
-def lambda_hundler(event, context):
+def lambda_handler(event, context):
     main.twitchMain()
     return 'success'
