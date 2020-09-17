@@ -117,5 +117,3 @@ def twitchMain():
     twitchResultList = collect.getTwitch()
     if checkTwitch(twitchResultList):
         sendMessage(twitchResultList,"Twitch")
-
-twitchMain()
