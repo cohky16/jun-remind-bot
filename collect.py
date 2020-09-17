@@ -3,6 +3,7 @@ import os
 from os.path import join, dirname
 from dotenv import load_dotenv
 import datetime as dt
+from pytz import timezone
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -37,11 +38,12 @@ def getTwitch():
         result.append(str(response.json()['stream']['channel']['url']))
         print('サムネイル: ' + str(response.json()['stream']['preview']['medium']))
         result.append(str(response.json()['stream']['preview']['medium']))
-        allDate = str(response.json()['stream']['channel']['updated_at'])
-        tempDate = dt.datetime(int(allDate[0:4]),int(allDate[5:7]),int(allDate[8:10]),int(allDate[11:13]),int(allDate[14:16]),int(allDate[17:19]))
-        date = tempDate.strftime("%Y/%m/%d %H:%M 開始")
-        print('配信開始時間: ' + str(date))
-        result.append(str(date))
+        allDate = str(response.json()['stream']['created_at'])
+        tempDateUTC = dt.datetime(int(allDate[0:4]),int(allDate[5:7]),int(allDate[8:10]),int(allDate[11:13]),int(allDate[14:16]),int(allDate[17:19]),1000,tzinfo=dt.timezone.utc)
+        tempDate = tempDateUTC.astimezone(timezone('Asia/Tokyo'))
+        date = str(tempDate.strftime("%Y/%m/%d %H:%M 開始"))
+        print('配信開始時間: ' + date)
+        result.append(date)
         print('ゲーム名: ' + str(response.json()['stream']['channel']['game']))
         if str(response.json()['stream']['channel']['game']) == '':
             result.append('未設定')
