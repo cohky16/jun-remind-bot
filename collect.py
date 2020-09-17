@@ -43,6 +43,9 @@ def getTwitch():
         print('配信開始時間: ' + str(date))
         result.append(str(date))
         print('ゲーム名: ' + str(response.json()['stream']['channel']['game']))
-        result.append(str(response.json()['stream']['channel']['game']))
+        if str(response.json()['stream']['channel']['game']) == '':
+            result.append('未設定')
+        else:
+            result.append(str(response.json()['stream']['channel']['game']))
 
         return result
