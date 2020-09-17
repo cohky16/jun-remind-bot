@@ -37,9 +37,7 @@ def getTwitch():
         result.append(str(response.json()['stream']['channel']['url']))
         print('サムネイル: ' + str(response.json()['stream']['preview']['medium']))
         result.append(str(response.json()['stream']['preview']['medium']))
-        #TODO:日付エンコードする
         allDate = str(response.json()['stream']['channel']['updated_at'])
-        print('取得時間: ' + str(allDate))
         tempDate = dt.datetime(int(allDate[0:4]),int(allDate[5:7]),int(allDate[8:10]),int(allDate[11:13]),int(allDate[14:16]),int(allDate[17:19]))
         date = tempDate.strftime("%Y/%m/%d %H:%M 開始")
         print('配信開始時間: ' + str(date))
