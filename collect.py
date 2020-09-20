@@ -41,8 +41,12 @@ def getTwitch():
         allDate = str(response.json()['stream']['created_at'])
         tempDateUTC = dt.datetime(int(allDate[0:4]),int(allDate[5:7]),int(allDate[8:10]),int(allDate[11:13]),int(allDate[14:16]),int(allDate[17:19]),1000,tzinfo=dt.timezone.utc)
         tempDate = tempDateUTC.astimezone(timezone('Asia/Tokyo'))
+        nowDate = dt.datetime.now().astimezone(timezone('Asia/Tokyo'))
+        print('現在時刻：' + str(nowDate) + ' 配信開始：' + str(tempDate))
+        difTime = nowDate - tempDate
+        if (difTime.seconds > 1):
+            return None
         date = str(tempDate.strftime("%Y/%m/%d %H:%M 開始"))
-        print('配信開始時間: ' + date)
         result.append(date)
         print('ゲーム名: ' + str(response.json()['stream']['channel']['game']))
         if str(response.json()['stream']['channel']['game']) == '':
