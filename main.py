@@ -15,11 +15,12 @@ LINE_CHANNEL_SECRET = os.environ.get("LINE_CHANNEL_SECRET")
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 
-def sendMessage(resultList,str):
+
+def sendMessage(resultList, str):
 
     message = {
         "type": "flex",
-        "altText":"「"+ resultList[0] + "」が開始しました",
+        "altText": "「" + resultList[0] + "」が開始しました",
         "contents": {
                 "type": "bubble",
                 "hero": {
@@ -80,7 +81,7 @@ def sendMessage(resultList,str):
                             ]
                         }
                     ]
-                },
+                    },
             "footer": {
                     "type": "box",
                     "layout": "vertical",
@@ -96,16 +97,14 @@ def sendMessage(resultList,str):
                             }
                         }
                     ]
-                    }
+            }
         }
     }
 
     obj = FlexSendMessage.new_from_json_dict(message)
-    line_bot_api.push_message(
-        os.environ.get("USER_ID")
-        , messages=obj
-        )
+    line_bot_api.broadcast(messages=obj)
     print("⭕配信中！通知しました：" + resultList[0])
+
 
 def checkTwitch(resultList):
     print("✅配信チェック: " + str(resultList))
@@ -113,7 +112,8 @@ def checkTwitch(resultList):
         return True
     return False
 
+
 def twitchMain():
     twitchResultList = collect.getTwitch()
     if checkTwitch(twitchResultList):
-        sendMessage(twitchResultList,"Twitch")
+        sendMessage(twitchResultList, "Twitch")
