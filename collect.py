@@ -106,7 +106,7 @@ def getDate(response):
     tempDate = tempDateUTC.astimezone(timezone('Asia/Tokyo'))
     nowDate = dt.datetime.now().astimezone(timezone('Asia/Tokyo'))
     difTime = nowDate - tempDate
-    if (difTime.seconds > 1):
+    if (difTime.seconds > 60):
         return None
     else:
         date = str(tempDate.strftime("%Y/%m/%d %H:%M 開始"))
