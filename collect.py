@@ -9,29 +9,26 @@ dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
 def getTwitch():
+    # トークン取得
     token = getToken()
     checkError(token)
     accessToken = token['access_token']
 
+    # チャンネル情報取得
     tempChannel = getId(accessToken)
     checkError(tempChannel)
     channel = tempChannel['data'][0]
 
-    url = 'https://api.twitch.tv/helix/streams'
-    headers = {
-        'Client-ID': os.environ.get("CLIENT_ID"),
-        'Authorization': 'Bearer ' + accessToken
-    }
-    params = '?user_id=' + channel['id']
-
-    tempResponse = requests.get(url + params, headers=headers).json()
+    # 配信情報取得
+    tempResponse = getLive(accessToken, channel['id'])
     checkError(tempResponse)
 
-    result = []
-    print('✅配信情報')
+    print('✅配信情報一覧')
     if not tempResponse['data']:
         print('未配信')
+        return None
     else:
+        result = []
         response = tempResponse['data'][0]
         # タイトル
         title = response['title'].strip()
@@ -88,6 +85,7 @@ def getToken():
     return response
 
 def getId(token):
+    print('✅チャンネル取得')
     url = 'https://api.twitch.tv/helix/search/channels?query='
     channelName = 'kato_junichi0817'
     headers = {
@@ -99,6 +97,19 @@ def getId(token):
 
     return response
 
+def getLive(token, channelId):
+    print('✅配信取得')
+    url = 'https://api.twitch.tv/helix/streams'
+    headers = {
+        'Client-ID': os.environ.get("CLIENT_ID"),
+        'Authorization': 'Bearer ' + token
+    }
+    params = '?user_id=' + channelId
+
+    response = requests.get(url + params, headers=headers).json()
+
+    return response
+
 def getDate(response):
     allDate = response['started_at']
     tempDateUTC = dt.datetime(int(allDate[0:4]), int(allDate[5:7]), int(allDate[8:10]), int(
@@ -107,6 +118,7 @@ def getDate(response):
     nowDate = dt.datetime.now().astimezone(timezone('Asia/Tokyo'))
     difTime = nowDate - tempDate
     if (difTime.seconds > 60):
+        print('＜通知済＞')
         return None
     else:
         date = str(tempDate.strftime("%Y/%m/%d %H:%M 開始"))
