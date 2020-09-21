@@ -15,6 +15,19 @@ LINE_CHANNEL_SECRET = os.environ.get("LINE_CHANNEL_SECRET")
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 
+def twitchMain():
+    try:
+        twitchResultList = collect.getTwitch()
+        if checkTwitch(twitchResultList):
+            sendMessage(twitchResultList, "Twitch")
+    except ValueError as e:
+        print(e)
+
+def checkTwitch(resultList):
+    print("✅配信チェック: " + str(resultList))
+    if resultList is not None:
+        return True
+    return False
 
 def sendMessage(resultList, str):
 
@@ -104,16 +117,3 @@ def sendMessage(resultList, str):
     obj = FlexSendMessage.new_from_json_dict(message)
     line_bot_api.broadcast(messages=obj)
     print("⭕配信中！通知しました：" + resultList[0])
-
-
-def checkTwitch(resultList):
-    print("✅配信チェック: " + str(resultList))
-    if resultList is not None:
-        return True
-    return False
-
-
-def twitchMain():
-    twitchResultList = collect.getTwitch()
-    if checkTwitch(twitchResultList):
-        sendMessage(twitchResultList, "Twitch")
