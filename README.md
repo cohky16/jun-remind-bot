@@ -5,6 +5,7 @@
 
 ## 使用手順
 以下のQRコードをカメラで読み込むだけ
+
 <img width="255" alt="qrcode" src="https://user-images.githubusercontent.com/45580421/93833199-eb488c80-fcb2-11ea-95cb-00e4be43055e.png">
 
 ## 通知レイアウト
