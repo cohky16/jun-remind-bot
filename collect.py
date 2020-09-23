@@ -115,14 +115,19 @@ def getDate(response):
     tempDateUTC = dt.datetime(int(allDate[0:4]), int(allDate[5:7]), int(allDate[8:10]), int(
         allDate[11:13]), int(allDate[14:16]), int(allDate[17:19]), 1000, tzinfo=dt.timezone.utc)
     tempDate = tempDateUTC.astimezone(timezone('Asia/Tokyo'))
-    nowDate = dt.datetime.now().astimezone(timezone('Asia/Tokyo'))
-    difTime = nowDate - tempDate
-    if (difTime.seconds > 60):
-        print('＜通知済＞')
+    tempDateStr = str(tempDate)
+    
+    path = 'liveTime.txt'
+
+    with open(path) as f:
+        oldLiveTime = f.read()
+    
+    if oldLiveTime == tempDateStr:
         return None
     else:
-        date = str(tempDate.strftime("%Y/%m/%d %H:%M 開始"))
-    return date
+        with open(path, mode='w') as f:
+            f.write(tempDateStr)
+        return str(tempDate.strftime("%Y/%m/%d %H:%M 開始"))
 
 def getGame(token, id):
     print('✅ゲーム名取得')
