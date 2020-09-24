@@ -117,7 +117,7 @@ def getDate(response):
     tempDate = tempDateUTC.astimezone(timezone('Asia/Tokyo'))
     tempDateStr = str(tempDate)
     
-    path = 'liveTime.txt'
+    path = 'tmp/liveTime.txt'
 
     with open(path) as f:
         oldLiveTime = f.read()
