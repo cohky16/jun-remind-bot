@@ -1,21 +1,17 @@
 
 name: AWS Lambda Deploy
-
 on:
-  push:
-    branches:
-      - master
-
+  push
 jobs:
-  deploy-lambda:
+  lambda:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
       - run: zip -r upload.zip *
-      - uses: yvesgurcan/deploy-lambda-function
+      - uses: stcalica/update-lambda
         with: 
           package: upload.zip
-          function-name: deploy-test
+          function-name: batchJunRemind
           AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_SECRET_ID: ${{ secrets.AWS_SECRET_ID }}
           AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
