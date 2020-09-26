@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - run: zip -r upload.zip *
-      - uses: stcalica/update-lambda
+      - uses: stcalica/update-lambda@master
         with: 
           package: upload.zip
           function-name: batchJunRemind
