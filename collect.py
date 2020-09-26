@@ -25,7 +25,7 @@ def getTwitch():
 
     print('✅配信情報一覧')
     if not tempResponse['data']:
-        print('未配信')
+        print('未配信です')
         return None
     else:
         result = []
