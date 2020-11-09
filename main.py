@@ -15,9 +15,9 @@ LINE_CHANNEL_SECRET = os.environ.get("LINE_CHANNEL_SECRET")
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 
-def twitchMain():
+def twitchMain(oldLiveTime):
     try:
-        twitchResultList = collect.getTwitch()
+        twitchResultList = collect.getTwitch(oldLiveTime)
         if checkTwitch(twitchResultList):
             sendMessage(twitchResultList, "Twitch")
     except ValueError as e:
