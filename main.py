@@ -20,6 +20,7 @@ def twitchMain(oldLiveTime):
         twitchResultList = collect.getTwitch(oldLiveTime)
         if checkTwitch(twitchResultList):
             sendMessage(twitchResultList, "Twitch")
+            return twitchResultList
     except ValueError as e:
         print(e)
 
