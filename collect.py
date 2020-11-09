@@ -8,7 +8,7 @@ from pytz import timezone
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
-def getTwitch():
+def getTwitch(oldLiveTime):
     # トークン取得
     token = getToken()
     checkError(token)
@@ -46,7 +46,7 @@ def getTwitch():
         result.append(thumnail)
 
         # 日付
-        date = getDate(response)
+        date = getDate(response, oldLiveTime)
         if date is None:
             return None
         else:
@@ -110,23 +110,16 @@ def getLive(token, channelId):
 
     return response
 
-def getDate(response):
+def getDate(response, oldLiveTime):
     allDate = response['started_at']
     tempDateUTC = dt.datetime(int(allDate[0:4]), int(allDate[5:7]), int(allDate[8:10]), int(
         allDate[11:13]), int(allDate[14:16]), int(allDate[17:19]), 1000, tzinfo=dt.timezone.utc)
     tempDate = tempDateUTC.astimezone(timezone('Asia/Tokyo'))
     tempDateStr = str(tempDate)
     
-    path = '/tmp/liveTime.txt'
-
-    with open(path) as f:
-        oldLiveTime = f.read()
-    
     if oldLiveTime == tempDateStr:
         return None
     else:
-        with open(path, mode='w') as f:
-            f.write(tempDateStr)
         return str(tempDate.strftime("%Y/%m/%d %H:%M 開始"))
 
 def getGame(token, id):
