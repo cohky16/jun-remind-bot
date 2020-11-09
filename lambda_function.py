@@ -13,6 +13,8 @@ def lambda_handler(event, context):
 
     result = main.twitchMain(oldLiveTime)
 
-    table.put_item(liveTime=result[3])
+    table.update_item(
+        Key={'liveTime': result[3]}
+    )
 
     return 'success'
