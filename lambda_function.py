@@ -13,8 +13,9 @@ def lambda_handler(event, context):
 
     result = main.twitchMain(oldLiveTime)
 
-    table.update_item(
-        Key={'liveTime': result[3]}
-    )
+    if result is not None:
+        table.update_item(
+            Key={'liveTime': result[3]}
+        )
 
     return 'success'
