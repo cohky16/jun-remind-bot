@@ -11,6 +11,8 @@ def lambda_handler(event, context):
     response = table.scan()
     oldLiveTime = response["Items"][0]['liveTime']
 
-    main.twitchMain(oldLiveTime)
+    result = main.twitchMain(oldLiveTime)
+
+    table.put_item(liveTime=result[3])
 
     return 'success'

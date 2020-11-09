@@ -115,12 +115,12 @@ def getDate(response, oldLiveTime):
     tempDateUTC = dt.datetime(int(allDate[0:4]), int(allDate[5:7]), int(allDate[8:10]), int(
         allDate[11:13]), int(allDate[14:16]), int(allDate[17:19]), 1000, tzinfo=dt.timezone.utc)
     tempDate = tempDateUTC.astimezone(timezone('Asia/Tokyo'))
-    tempDateStr = str(tempDate)
+    tempDateStr = str(tempDate.strftime("%Y/%m/%d %H:%M 開始"))
     
     if oldLiveTime == tempDateStr:
         return None
     else:
-        return str(tempDate.strftime("%Y/%m/%d %H:%M 開始"))
+        return tempDateStr
 
 def getGame(token, id):
     print('✅ゲーム名取得')
