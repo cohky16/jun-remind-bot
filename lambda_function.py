@@ -9,7 +9,7 @@ def lambda_handler(event, context):
 
     table = dynamodb.Table('junRemind')
     response = table.scan()
-    oldLiveTime = response["Items"]['liveTime']
+    oldLiveTime = response["Items"][0]['liveTime']
 
     main.twitchMain(oldLiveTime)
 
