@@ -15,7 +15,13 @@ def lambda_handler(event, context):
 
     if result is not None:
         table.update_item(
-            Key={'liveTime': result[3]}
+            Key= {
+                'liveTime': oldLiveTime
+            },
+            UpdateExpression="set liveTime = :lt",
+            ExpressionAttributeValues={
+            ':lt': result[3]
+            }
         )
 
     return 'success'
