@@ -7,6 +7,7 @@ import os
 from os.path import join, dirname
 from dotenv import load_dotenv
 
+# 環境変数取得
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
@@ -15,6 +16,9 @@ LINE_CHANNEL_SECRET = os.environ.get("LINE_CHANNEL_SECRET")
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 
+"""
+twitchのメイン処理
+"""
 def twitchMain(oldLiveTime):
     try:
         twitchResultList = collect.getTwitch(oldLiveTime)
@@ -24,12 +28,18 @@ def twitchMain(oldLiveTime):
     except ValueError as e:
         print(e)
 
+"""
+配信しているかチェック
+"""
 def checkTwitch(resultList):
     print("✅配信チェック: " + str(resultList))
     if resultList is not None:
         return True
     return False
 
+"""
+メッセージ送信処理
+"""
 def sendMessage(resultList, str):
 
     message = {
@@ -115,6 +125,8 @@ def sendMessage(resultList, str):
         }
     }
 
+    #メッセージのレイアウト
     obj = FlexSendMessage.new_from_json_dict(message)
+    # 登録してるユーザー全てに送信
     line_bot_api.broadcast(messages=obj)
     print("⭕配信中！通知しました：" + resultList[0])
