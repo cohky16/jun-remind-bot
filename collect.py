@@ -5,9 +5,13 @@ from dotenv import load_dotenv
 import datetime as dt
 from pytz import timezone
 
+# 環境変数取得
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
+"""
+twitchの情報を取得
+"""
 def getTwitch(oldLiveTime):
     # トークン取得
     token = getToken()
@@ -70,6 +74,9 @@ def getTwitch(oldLiveTime):
             result.append('未設定')
         return result
 
+"""
+トークンを取得
+"""
 def getToken():
     print('✅トークン取得')
     url = 'https://id.twitch.tv/oauth2/token'
@@ -84,6 +91,9 @@ def getToken():
     print(response)
     return response
 
+"""
+チャンネルIDを取得
+"""
 def getId(token):
     print('✅チャンネル取得')
     url = 'https://api.twitch.tv/helix/search/channels?query='
@@ -97,6 +107,9 @@ def getId(token):
 
     return response
 
+"""
+配信情報を取得
+"""
 def getLive(token, channelId):
     print('✅配信取得')
     url = 'https://api.twitch.tv/helix/streams'
@@ -110,10 +123,15 @@ def getLive(token, channelId):
 
     return response
 
+"""
+配信開始日時を取得
+"""
 def getDate(response, oldLiveTime):
     allDate = response['started_at']
+    #　dateTimeとして取得
     tempDateUTC = dt.datetime(int(allDate[0:4]), int(allDate[5:7]), int(allDate[8:10]), int(
         allDate[11:13]), int(allDate[14:16]), int(allDate[17:19]), 1000, tzinfo=dt.timezone.utc)
+    #　JSTに変換
     tempDate = tempDateUTC.astimezone(timezone('Asia/Tokyo'))
     tempDateStr = str(tempDate.strftime("%Y/%m/%d %H:%M 開始"))
     
@@ -122,6 +140,9 @@ def getDate(response, oldLiveTime):
     else:
         return tempDateStr
 
+"""
+配信中のゲームを取得
+"""
 def getGame(token, id):
     print('✅ゲーム名取得')
     url = 'https://api.twitch.tv/helix/games'
@@ -135,6 +156,9 @@ def getGame(token, id):
     print(response)
     return response
 
+"""
+エラーチェック処理
+"""
 def checkError(response):
     if ('status' in response.keys() and response['status'] != 200) and 'message' in response.keys():
         print('❌エラー： ' + response['message'])
