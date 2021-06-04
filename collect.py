@@ -40,7 +40,7 @@ def getTwitch(oldLiveTime):
         result.append(title)
 
         # 配信URL
-        url = 'https://www.twitch.tv/' + channel['display_name']
+        url = 'https://www.twitch.tv/kato_junichi0817'
         print('配信URL: ' + url)
         result.append(url)
 
