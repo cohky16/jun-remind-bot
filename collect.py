@@ -88,7 +88,6 @@ def getToken():
     }
 
     response = requests.post(url, data=data).json()
-    print(response)
     return response
 
 """
