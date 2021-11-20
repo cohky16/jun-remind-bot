@@ -23,9 +23,13 @@ def getTwitch(oldLiveTime):
     checkError(tempChannel)
     channel = tempChannel['data'][0]
 
+    print("check channel:", channel)
+
     # 配信情報取得
     tempResponse = getLive(accessToken, channel['id'])
     checkError(tempResponse)
+
+    print("check response: ", tempResponse)
 
     print('✅配信情報一覧')
     if not tempResponse['data']:
@@ -162,3 +166,6 @@ def checkError(response):
     if ('status' in response.keys() and response['status'] != 200) and 'message' in response.keys():
         print('❌エラー： ' + response['message'])
         raise ValueError(response['message'])
+
+if __name__ == "__main__":
+    getTwitch("2021-01-01")
