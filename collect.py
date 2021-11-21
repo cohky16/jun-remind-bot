@@ -44,7 +44,7 @@ def getTwitch(oldLiveTime):
         result.append(title)
 
         # 配信URL
-        url = 'https://www.twitch.tv/kato_junichi0817'
+        url = 'https://www.twitch.tv/dmf_kyochan'
         print('配信URL: ' + url)
         result.append(url)
 
@@ -100,7 +100,7 @@ def getToken():
 def getId(token):
     print('✅チャンネル取得')
     url = 'https://api.twitch.tv/helix/search/channels?query='
-    channelName = 'kato_junichi0817'
+    channelName = 'dmf_kyochan'
     headers = {
         'Client-ID': os.environ.get("CLIENT_ID"),
         'Authorization': 'Bearer ' + token
