@@ -19,17 +19,12 @@ def getTwitch(oldLiveTime):
     accessToken = token['access_token']
 
     # チャンネル情報取得
-    tempChannel = getId(accessToken)
-    checkError(tempChannel)
-    channel = tempChannel['data'][0]
-
-    print("check channel:", channel)
+    channel = getId(accessToken)
+    checkError(channel)
 
     # 配信情報取得
     tempResponse = getLive(accessToken, channel['id'])
     checkError(tempResponse)
-
-    print("check response: ", tempResponse)
 
     print('✅配信情報一覧')
     if not tempResponse['data']:
@@ -44,7 +39,7 @@ def getTwitch(oldLiveTime):
         result.append(title)
 
         # 配信URL
-        url = 'https://www.twitch.tv/dmf_kyochan'
+        url = 'https://www.twitch.tv/kato_junichi0817'
         print('配信URL: ' + url)
         result.append(url)
 
@@ -100,7 +95,7 @@ def getToken():
 def getId(token):
     print('✅チャンネル取得')
     url = 'https://api.twitch.tv/helix/search/channels?query='
-    channelName = 'dmf_kyochan'
+    channelName = 'kato_junichi0817'
     headers = {
         'Client-ID': os.environ.get("CLIENT_ID"),
         'Authorization': 'Bearer ' + token
@@ -108,7 +103,10 @@ def getId(token):
 
     response = requests.get(url + channelName, headers=headers).json()
 
-    return response
+    for r in response['data']:
+        if r['broadcaster_login'] == channelName: return r
+
+    return 
 
 """
 配信情報を取得
@@ -168,4 +166,4 @@ def checkError(response):
         raise ValueError(response['message'])
 
 if __name__ == "__main__":
-    getTwitch("2021-01-01")
+    getTwitch("2020-01-01")
