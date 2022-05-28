@@ -85,7 +85,7 @@ func getEnv() (env *Env, err error) {
 	env.clientSecret = os.Getenv("CLIENT_SECRET")
 	env.lineChannelAccessToken = os.Getenv("LINE_CHANNEL_ACCESS_TOKEN")
 	env.lineChannelSecret = os.Getenv("LINE_CHANNEL_SECRET")
-	env.url = "https://www.twitch.tv/euriece"
+	env.url = "https://www.twitch.tv/fps_shaka"
 
 	return
 }
@@ -124,7 +124,7 @@ func getToken(env *Env) (token *Token, err error) {
 // チャンネル情報取得
 func getChannel(env *Env, token *Token) (*Channel, error) {
 	fmt.Println("チャンネル取得")
-	channelName := "euriece"
+	channelName := "fps_shaka"
 
 	req, _ := http.NewRequest(http.MethodGet, "https://api.twitch.tv/helix/search/channels?query="+channelName, nil)
 	req.Header.Set("Client-ID", env.clientId)
@@ -183,8 +183,6 @@ func getLive(env *Env, token *Token, channel *Channel) (*Live, error) {
 
 	data := new(LiveData)
 
-	fmt.Println(data)
-
 	_ = json.Unmarshal(b, data)
 
 	if len(data.Live) == 0 {
@@ -236,7 +234,7 @@ func getOldLiveTime(live *Live) (string, error) {
 		},
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":liveTime_value": {
-				S: aws.String("2022/05/26 20:43 開始"),
+				S: aws.String(liveTime),
 			},
 		},
 		UpdateExpression: aws.String("set #liveTime = :liveTime_value"),
@@ -347,36 +345,46 @@ func HandleRequest(ctx context.Context) (string, err error) {
 	env, err := getEnv()
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	token, err := getToken(env)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	channel, err := getChannel(env, token)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	live, err := getLive(env, token, channel)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	liveTime, err := getOldLiveTime(live)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	err = sendMessage(env, live, liveTime)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	return
 }
 
 func main() {
-	lambda.Start(HandleRequest)
+	if os.Getenv("APP_ENV") == "production" {
+		lambda.Start(HandleRequest)
+	} else {
+		HandleRequest(nil)
+	}
 }
