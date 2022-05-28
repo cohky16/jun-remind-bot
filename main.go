@@ -85,7 +85,7 @@ func getEnv() (env *Env, err error) {
 	env.clientSecret = os.Getenv("CLIENT_SECRET")
 	env.lineChannelAccessToken = os.Getenv("LINE_CHANNEL_ACCESS_TOKEN")
 	env.lineChannelSecret = os.Getenv("LINE_CHANNEL_SECRET")
-	env.url = "https://www.twitch.tv/fps_shaka"
+	env.url = "https://www.twitch.tv/kato_junichi0817"
 
 	return
 }
@@ -124,7 +124,7 @@ func getToken(env *Env) (token *Token, err error) {
 // チャンネル情報取得
 func getChannel(env *Env, token *Token) (*Channel, error) {
 	fmt.Println("チャンネル取得")
-	channelName := "fps_shaka"
+	channelName := "kato_junichi0817"
 
 	req, _ := http.NewRequest(http.MethodGet, "https://api.twitch.tv/helix/search/channels?query="+channelName, nil)
 	req.Header.Set("Client-ID", env.clientId)
