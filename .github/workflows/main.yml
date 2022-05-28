@@ -26,9 +26,8 @@ jobs:
         run: go get -v
       - name: Build
         run: go build .
-      - name: Deploy
-        uses: stcalica/update-lambda@master
-        run: zip -r upload.zip jrb
+      - uses: stcalica/update-lambda@master
+      - run: zip -r upload.zip jrb
         with: 
           package: upload.zip
           function-name: batchJunRemind2
