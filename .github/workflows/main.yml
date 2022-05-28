@@ -23,9 +23,9 @@ jobs:
       - name: Setup
         uses: actions/setup-go@v2
       - name: Dependencies
-        uses: go get -v
+        run: go get -v
       - name: Build
-        uses: go build .
+        run: go build .
       - name: Deploy
         uses: stcalica/update-lambda@master
         run: zip -r upload.zip jrb
