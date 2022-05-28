@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +11,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/joho/godotenv"
 	"github.com/line/line-bot-sdk-go/v7/linebot"
 )
@@ -191,15 +196,58 @@ func getLive(env *Env, token *Token, channel *Channel) (*Live, error) {
 	return data.Live[0], nil
 }
 
+// dynamoテーブル取得
+func getOldLiveTime(live *Live) (string, error) {
+	ddb := dynamodb.New(session.New(), aws.NewConfig().WithRegion("ap-northeast-1"))
+
+	resp, err := ddb.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String("liveInfo2"),
+		Key: map[string]*dynamodb.AttributeValue{
+			"id": {
+				N: aws.String("1"),
+			},
+		},
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	jst := time.FixedZone("Asia/Tokyo", 9*60*60)
+	liveTime := live.StartedAt.In(jst).Format("2006/01/02 15:04") + " 開始"
+
+	if *resp.Item["liveTime"].S == liveTime {
+		return "", fmt.Errorf("通知済みです")
+	}
+
+	_, err = ddb.UpdateItem(&dynamodb.UpdateItemInput{
+		TableName: aws.String("liveInfo2"),
+		Key: map[string]*dynamodb.AttributeValue{
+			"id": {
+				N: aws.String("1"),
+			},
+		},
+		ExpressionAttributeNames: map[string]*string{
+			"#liveTime": aws.String("liveTime"),
+		},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":liveTime_value": {
+				S: aws.String("2022/05/26 20:43 開始"),
+			},
+		},
+		UpdateExpression: aws.String("set #liveTime = :liveTime_value"),
+	})
+
+	return liveTime, nil
+}
+
 // メッセージ送信
-func sendMessage(env *Env, live *Live) (err error) {
+func sendMessage(env *Env, live *Live, liveTime string) (err error) {
 	client, err := linebot.New(env.lineChannelSecret, env.lineChannelAccessToken)
 
 	if err != nil {
 		return
 	}
-
-	jst := time.FixedZone("Asia/Tokyo", 9*60*60)
 
 	message := linebot.NewFlexMessage(
 		"「"+live.Title+"」が開始しました",
@@ -231,7 +279,7 @@ func sendMessage(env *Env, live *Live) (err error) {
 					},
 					&linebot.TextComponent{
 						Type: linebot.FlexComponentTypeText,
-						Text: live.StartedAt.In(jst).Format("2006/01/02 15:04") + " 開始",
+						Text: liveTime,
 						Size: linebot.FlexTextSizeTypeXs,
 					},
 					&linebot.TextComponent{
@@ -288,37 +336,43 @@ func sendMessage(env *Env, live *Live) (err error) {
 
 	fmt.Println("配信中！通知しました：" + live.Title)
 
-	return nil
+	return
 }
 
-func main() {
+func HandleRequest(ctx context.Context) (string, err error) {
 	env, err := getEnv()
 	if err != nil {
 		fmt.Println(err)
-		return
 	}
 
 	token, err := getToken(env)
 	if err != nil {
 		fmt.Println(err)
-		return
 	}
 
 	channel, err := getChannel(env, token)
 	if err != nil {
 		fmt.Println(err)
-		return
 	}
 
 	live, err := getLive(env, token, channel)
 	if err != nil {
 		fmt.Println(err)
-		return
 	}
 
-	err = sendMessage(env, live)
+	liveTime, err := getOldLiveTime(live)
 	if err != nil {
 		fmt.Println(err)
-		return
 	}
+
+	err = sendMessage(env, live, liveTime)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return
+}
+
+func main() {
+	lambda.Start(HandleRequest)
 }

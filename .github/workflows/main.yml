@@ -15,3 +15,23 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_SECRET_ID: ${{ secrets.AWS_SECRET_ID }}
           AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
+  lambda2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Setup
+        uses: actions/setup-go@v2
+      - name: Dependencies
+        uses: go get -v
+      - name: Build
+        uses: go build .
+      - name: Deploy
+        uses: stcalica/update-lambda@master
+        run: zip -r upload.zip jrb
+        with: 
+          package: upload.zip
+          function-name: batchJunRemind2
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_SECRET_ID: ${{ secrets.AWS_SECRET_ID }}
+          AWS_SECRET_KEY: ${{ secrets.AWS_SECRET_KEY }}
