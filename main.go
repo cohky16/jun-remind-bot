@@ -203,7 +203,7 @@ func getOldLiveTime(live *Live) (string, error) {
 	ddb := dynamodb.New(session.New(), aws.NewConfig().WithRegion("ap-northeast-1"))
 
 	resp, err := ddb.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String("liveInfo2"),
+		TableName: aws.String("liveInfo"),
 		Key: map[string]*dynamodb.AttributeValue{
 			"id": {
 				N: aws.String("1"),
@@ -223,7 +223,7 @@ func getOldLiveTime(live *Live) (string, error) {
 	}
 
 	_, err = ddb.UpdateItem(&dynamodb.UpdateItemInput{
-		TableName: aws.String("liveInfo2"),
+		TableName: aws.String("liveInfo"),
 		Key: map[string]*dynamodb.AttributeValue{
 			"id": {
 				N: aws.String("1"),
