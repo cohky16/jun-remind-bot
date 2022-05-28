@@ -183,6 +183,8 @@ func getLive(env *Env, token *Token, channel *Channel) (*Live, error) {
 
 	data := new(LiveData)
 
+	fmt.Println(data)
+
 	_ = json.Unmarshal(b, data)
 
 	if len(data.Live) == 0 {
@@ -198,6 +200,8 @@ func getLive(env *Env, token *Token, channel *Channel) (*Live, error) {
 
 // dynamoテーブル取得
 func getOldLiveTime(live *Live) (string, error) {
+	fmt.Println("配信時間取得")
+
 	ddb := dynamodb.New(session.New(), aws.NewConfig().WithRegion("ap-northeast-1"))
 
 	resp, err := ddb.GetItem(&dynamodb.GetItemInput{
