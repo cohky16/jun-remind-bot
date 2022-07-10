@@ -1,0 +1,12 @@
+version: '3'
+services:
+  terraform:
+    container_name: jrb
+    image: hashicorp/terraform:1.1.9
+    env_file:
+      - .env
+    volumes:
+      - .:/terraform
+    working_dir: /terraform
+    entrypoint: ash
+    tty: true

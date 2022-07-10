@@ -1,2 +1,10 @@
-.env
 jrb
+
+# env
+.env
+
+# Terraform
+.terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
