@@ -1,2 +1,11 @@
-.env
 jrb
+upload.zip
+
+# env
+.env
+
+# Terraform
+.terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
