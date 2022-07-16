@@ -4,6 +4,10 @@ terraform {
       source = "mongodb/mongodbatlas"
       version = "1.4.2"
     }
+    aws = {
+      source = "hashicorp/aws"
+      version = "4.22.0"
+    }
   }
 }
 
@@ -58,4 +62,119 @@ resource "mongodbatlas_cluster" "jrb" {
         num_shards = 1
         zone_name = "Zone 1"
     }
+}
+
+variable "AWS_ACCESS_KEY_ID" {}
+variable "AWS_SECRET_ACCESS_KEY" {}
+variable "AWS_REGION" {}
+
+provider "aws" {
+  access_key = var.AWS_ACCESS_KEY_ID
+  secret_key = var.AWS_SECRET_ACCESS_KEY
+  region     = var.AWS_REGION
+}
+
+resource "aws_iam_role" "sts_for_iam" {
+  name = "sts_for_iam"
+  assume_role_policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Action": "sts:AssumeRole",
+        "Principal": {
+          "Service": "lambda.amazonaws.com"
+        },
+        "Effect": "Allow",
+        "Sid": ""
+      }
+    ]
+  }
+  EOF
+}
+
+data "aws_caller_identity" "current" {}
+
+resource "aws_iam_role_policy" "iam_for_lambda" {
+  name = "iam_for_lambda"
+  role = aws_iam_role.sts_for_iam.id
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "logs:CreateLogGroup",
+            "Resource": "arn:aws:logs:ap-northeast-1:${data.aws_caller_identity.current.account_id}:*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogStream",
+                "logs:PutLogEvents",
+                "dynamodb:*"
+            ],
+            "Resource": [
+                "arn:aws:logs:ap-northeast-1:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/batch_jun_remind:*"
+            ]
+        }
+    ]
+  }
+  EOF
+}
+
+data "archive_file" "go" {
+  type        = "zip"
+  source_file = "jrb"
+  output_path = "upload.zip"
+}
+
+variable "APP_ENV" {} 
+variable "CLIENT_ID" {} 
+variable "CLIENT_SECRET" {} 
+variable "LINE_CHANNEL_ACCESS_TOKEN" {} 
+variable "LINE_CHANNEL_SECRET" {} 
+
+resource "aws_lambda_function" "batch_jun_remind" {
+  filename      = "upload.zip"
+  function_name = "batch_jun_remind"
+  role          = aws_iam_role.sts_for_iam.arn
+  handler       = "jrb"
+  architectures = ["x86_64"]
+  runtime = "go1.x"
+
+  environment {
+    variables = {
+      APP_ENV = var.APP_ENV
+      CLIENT_ID = var.CLIENT_ID
+      CLIENT_SECRET = var.CLIENT_SECRET
+      LINE_CHANNEL_ACCESS_TOKEN = var.LINE_CHANNEL_ACCESS_TOKEN
+      LINE_CHANNEL_SECRET = var.LINE_CHANNEL_SECRET
+    }
+  }
+}
+
+resource "aws_cloudwatch_log_group" "log" {
+  name              = "/aws/lambda/${aws_lambda_function.batch_jun_remind.function_name}"
+  retention_in_days = 14
+}
+
+resource "aws_cloudwatch_event_rule" "every_minutes" {
+    name                = "every_minutes"
+    description         = "every_minutes"
+    schedule_expression = "rate(1 minute)"
+}
+
+resource "aws_cloudwatch_event_target" "target" {
+    target_id = "batch_jun_remind"
+    rule      = aws_cloudwatch_event_rule.every_minutes.name
+    arn       = aws_lambda_function.batch_jun_remind.arn
+}
+
+resource "aws_lambda_permission" "permission" {
+    statement_id  = "AllowExecutionFromCloudWatch"
+    action        = "lambda:InvokeFunction"
+    function_name = aws_lambda_function.batch_jun_remind.function_name
+    principal     = "events.amazonaws.com"
+    source_arn    = aws_cloudwatch_event_rule.every_minutes.arn
 }
