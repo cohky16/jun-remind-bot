@@ -111,8 +111,7 @@ resource "aws_iam_role_policy" "iam_for_lambda" {
             "Effect": "Allow",
             "Action": [
                 "logs:CreateLogStream",
-                "logs:PutLogEvents",
-                "dynamodb:*"
+                "logs:PutLogEvents"
             ],
             "Resource": [
                 "arn:aws:logs:ap-northeast-1:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/batch_jun_remind:*"
@@ -134,6 +133,7 @@ variable "CLIENT_ID" {}
 variable "CLIENT_SECRET" {} 
 variable "LINE_CHANNEL_ACCESS_TOKEN" {} 
 variable "LINE_CHANNEL_SECRET" {} 
+variable "MONGODB_URI" {} 
 
 resource "aws_lambda_function" "batch_jun_remind" {
   filename      = "upload.zip"
@@ -150,6 +150,7 @@ resource "aws_lambda_function" "batch_jun_remind" {
       CLIENT_SECRET = var.CLIENT_SECRET
       LINE_CHANNEL_ACCESS_TOKEN = var.LINE_CHANNEL_ACCESS_TOKEN
       LINE_CHANNEL_SECRET = var.LINE_CHANNEL_SECRET
+      MONGODB_URI = var.MONGODB_URI
     }
   }
 }

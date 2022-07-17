@@ -12,11 +12,12 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/joho/godotenv"
 	"github.com/line/line-bot-sdk-go/v7/linebot"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Env struct {
@@ -25,6 +26,7 @@ type Env struct {
 	lineChannelAccessToken string
 	lineChannelSecret      string
 	url                    string
+	mongodbUri             string
 }
 
 type Token struct {
@@ -34,7 +36,6 @@ type Token struct {
 type ChannelData struct {
 	Channels []*Channel `json:"data"`
 }
-
 type Channel struct {
 	BroadcasterLanguage string        `json:"broadcaster_language"`
 	BroadcasterLogin    string        `json:"broadcaster_login"`
@@ -70,6 +71,11 @@ type Live struct {
 	IsMature     bool      `json:"is_mature"`
 }
 
+type Data struct {
+	Id       primitive.ObjectID `json:"id" bson:"_id"`
+	LiveTime string             `json: "liveTime" bson: "liveTime"`
+}
+
 // 環境変数取得
 func getEnv() (env *Env, err error) {
 	if os.Getenv("APP_ENV") != "production" && os.Getenv("CI_ENV") != "TRUE" {
@@ -86,6 +92,7 @@ func getEnv() (env *Env, err error) {
 	env.lineChannelAccessToken = os.Getenv("LINE_CHANNEL_ACCESS_TOKEN")
 	env.lineChannelSecret = os.Getenv("LINE_CHANNEL_SECRET")
 	env.url = "https://www.twitch.tv/kato_junichi0817"
+	env.mongodbUri = os.Getenv("MONGODB_URI")
 
 	return
 }
@@ -196,21 +203,26 @@ func getLive(env *Env, token *Token, channel *Channel) (*Live, error) {
 	return data.Live[0], nil
 }
 
-// dynamoテーブル取得
-func getOldLiveTime(live *Live) (string, error) {
+// mongodbコレクション取得
+func getOldLiveTime(env *Env, live *Live) (string, error) {
 	fmt.Println("配信時間取得")
 
-	ddb := dynamodb.New(session.New(), aws.NewConfig().WithRegion("ap-northeast-1"))
+	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
+	clientOptions := options.Client().
+		ApplyURI(env.mongodbUri).
+		SetServerAPIOptions(serverAPIOptions)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		return "", err
+	}
+	defer client.Disconnect(ctx)
 
-	resp, err := ddb.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String("liveInfo"),
-		Key: map[string]*dynamodb.AttributeValue{
-			"id": {
-				N: aws.String("1"),
-			},
-		},
-	})
-
+	coll := client.Database("jrb").Collection("liveInfo")
+	var data Data
+	filter := bson.D{{"userId", 1}}
+	err = coll.FindOne(context.TODO(), filter).Decode(&data)
 	if err != nil {
 		return "", err
 	}
@@ -218,27 +230,14 @@ func getOldLiveTime(live *Live) (string, error) {
 	jst := time.FixedZone("Asia/Tokyo", 9*60*60)
 	liveTime := live.StartedAt.In(jst).Format("2006/01/02 15:04") + " 開始"
 
-	if *resp.Item["liveTime"].S == liveTime {
+	if data.LiveTime == liveTime {
 		return "", fmt.Errorf("通知済みです")
 	}
 
-	_, err = ddb.UpdateItem(&dynamodb.UpdateItemInput{
-		TableName: aws.String("liveInfo"),
-		Key: map[string]*dynamodb.AttributeValue{
-			"id": {
-				N: aws.String("1"),
-			},
-		},
-		ExpressionAttributeNames: map[string]*string{
-			"#liveTime": aws.String("liveTime"),
-		},
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":liveTime_value": {
-				S: aws.String(liveTime),
-			},
-		},
-		UpdateExpression: aws.String("set #liveTime = :liveTime_value"),
-	})
+	_, err = coll.UpdateOne(context.TODO(), filter, bson.D{{"$set", bson.D{{"liveTime", liveTime}}}})
+	if err != nil {
+		return "", err
+	}
 
 	return liveTime, nil
 }
@@ -366,7 +365,7 @@ func HandleRequest(ctx context.Context) (string, err error) {
 		return
 	}
 
-	liveTime, err := getOldLiveTime(live)
+	liveTime, err := getOldLiveTime(env, live)
 	if err != nil {
 		fmt.Println(err)
 		return
