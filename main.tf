@@ -9,6 +9,13 @@ terraform {
       version = "4.22.0"
     }
   }
+  cloud {
+    organization = "cohky"
+
+    workspaces {
+      name = "jrb"
+    }
+  }
 }
 
 provider "mongodbatlas" {}
