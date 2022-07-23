@@ -142,6 +142,7 @@ resource "aws_lambda_function" "batch_jun_remind" {
   handler       = "jrb"
   architectures = ["x86_64"]
   runtime = "go1.x"
+  timeout = 180
 
   environment {
     variables = {

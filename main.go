@@ -18,6 +18,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 type Env struct {
@@ -77,6 +78,8 @@ type Data struct {
 	LiveTime string             `json: "liveTime" bson: "liveTime"`
 }
 
+var client *mongo.Client
+
 // 環境変数取得
 func getEnv() (env *Env, err error) {
 	if os.Getenv("APP_ENV") != "production" && os.Getenv("CI_ENV") != "TRUE" {
@@ -97,6 +100,23 @@ func getEnv() (env *Env, err error) {
 	env.mongodbUri = os.Getenv("MONGODB_URI")
 
 	return
+}
+
+// mongodbのコネクション
+func connection(env *Env) (err error) {
+	if client == nil || client.Ping(context.TODO(), &readpref.ReadPref{}) != nil {
+		serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
+		clientOptions := options.Client().
+			ApplyURI(env.mongodbUri).
+			SetServerAPIOptions(serverAPIOptions)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		client, err = mongo.Connect(ctx, clientOptions)
+		if err != nil {
+			return
+		}
+	}
+	return nil
 }
 
 // トークン取得
@@ -208,22 +228,10 @@ func getLive(env *Env, token *Token, channel *Channel) (*Live, error) {
 func getOldLiveTime(env *Env, live *Live) (string, error) {
 	fmt.Println("配信時間取得")
 
-	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
-	clientOptions := options.Client().
-		ApplyURI(env.mongodbUri).
-		SetServerAPIOptions(serverAPIOptions)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	client, err := mongo.Connect(ctx, clientOptions)
-	if err != nil {
-		return "", err
-	}
-	defer client.Disconnect(ctx)
-
 	coll := client.Database("jrb").Collection("liveInfo")
 	var data Data
 	filter := bson.D{{"userId", 1}}
-	err = coll.FindOne(context.TODO(), filter).Decode(&data)
+	err := coll.FindOne(context.TODO(), filter).Decode(&data)
 	if err != nil {
 		return "", err
 	}
@@ -343,6 +351,12 @@ func sendMessage(env *Env, live *Live, liveTime string) (err error) {
 
 func HandleRequest(ctx context.Context) (string, err error) {
 	env, err := getEnv()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	err = connection(env)
 	if err != nil {
 		fmt.Println(err)
 		return
