@@ -32,6 +32,7 @@ jobs:
         run: terraform apply -auto-approve -input=false
   upload:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     needs: infra
     steps:
       - name: Checkout
