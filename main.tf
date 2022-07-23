@@ -9,6 +9,13 @@ terraform {
       version = "4.22.0"
     }
   }
+  cloud {
+    organization = "cohky"
+
+    workspaces {
+      name = "jrb"
+    }
+  }
 }
 
 provider "mongodbatlas" {}
@@ -122,12 +129,6 @@ resource "aws_iam_role_policy" "iam_for_lambda" {
   EOF
 }
 
-data "archive_file" "go" {
-  type        = "zip"
-  source_file = "jrb"
-  output_path = "upload.zip"
-}
-
 variable "APP_ENV" {} 
 variable "CLIENT_ID" {} 
 variable "CLIENT_SECRET" {} 
@@ -142,6 +143,7 @@ resource "aws_lambda_function" "batch_jun_remind" {
   handler       = "jrb"
   architectures = ["x86_64"]
   runtime = "go1.x"
+  timeout = 180
 
   environment {
     variables = {

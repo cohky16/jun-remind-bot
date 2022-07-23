@@ -1,22 +1,49 @@
 
-name: AWS Lambda Deploy
+name: cicd
 on:
   push
 jobs:
-  lambda:
+  infra:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.1.9
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+      - name: Terraform Init
+        id: init
+        run: terraform init
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+      - name: Terraform Plan
+        id: plan
+        if: github.event_name == 'pull_request'
+        run: terraform plan -no-color -input=false
+        continue-on-error: true
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false
+  upload:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: infra
+    steps:
+      - name: Checkout
         uses: actions/checkout@master
-      - name: Setup
+      - name: Setup Go
         uses: actions/setup-go@v2
       - name: Dependencies
         run: go get -v
       - name: Build
-        run: go build .
-      - name: Zip
-        run: zip -r upload.zip jrb
-      - name: Deploy
+        run: make build
+      - name: Upload
         uses: stcalica/update-lambda@master
         with: 
           package: upload.zip

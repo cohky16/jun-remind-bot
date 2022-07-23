@@ -18,6 +18,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 type Env struct {
@@ -25,6 +26,7 @@ type Env struct {
 	clientSecret           string
 	lineChannelAccessToken string
 	lineChannelSecret      string
+	channelName            string
 	url                    string
 	mongodbUri             string
 }
@@ -76,6 +78,8 @@ type Data struct {
 	LiveTime string             `json: "liveTime" bson: "liveTime"`
 }
 
+var client *mongo.Client
+
 // 環境変数取得
 func getEnv() (env *Env, err error) {
 	if os.Getenv("APP_ENV") != "production" && os.Getenv("CI_ENV") != "TRUE" {
@@ -91,10 +95,28 @@ func getEnv() (env *Env, err error) {
 	env.clientSecret = os.Getenv("CLIENT_SECRET")
 	env.lineChannelAccessToken = os.Getenv("LINE_CHANNEL_ACCESS_TOKEN")
 	env.lineChannelSecret = os.Getenv("LINE_CHANNEL_SECRET")
-	env.url = "https://www.twitch.tv/kato_junichi0817"
+	env.channelName = "kato_junichi0817"
+	env.url = "https://www.twitch.tv/" + env.channelName
 	env.mongodbUri = os.Getenv("MONGODB_URI")
 
 	return
+}
+
+// mongodbのコネクション
+func connection(env *Env) (err error) {
+	if client == nil || client.Ping(context.TODO(), &readpref.ReadPref{}) != nil {
+		serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
+		clientOptions := options.Client().
+			ApplyURI(env.mongodbUri).
+			SetServerAPIOptions(serverAPIOptions)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		client, err = mongo.Connect(ctx, clientOptions)
+		if err != nil {
+			return
+		}
+	}
+	return nil
 }
 
 // トークン取得
@@ -131,9 +153,8 @@ func getToken(env *Env) (token *Token, err error) {
 // チャンネル情報取得
 func getChannel(env *Env, token *Token) (*Channel, error) {
 	fmt.Println("チャンネル取得")
-	channelName := "kato_junichi0817"
 
-	req, _ := http.NewRequest(http.MethodGet, "https://api.twitch.tv/helix/search/channels?query="+channelName, nil)
+	req, _ := http.NewRequest(http.MethodGet, "https://api.twitch.tv/helix/search/channels?query="+env.channelName, nil)
 	req.Header.Set("Client-ID", env.clientId)
 	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
 
@@ -157,7 +178,7 @@ func getChannel(env *Env, token *Token) (*Channel, error) {
 	_ = json.Unmarshal(b, data)
 
 	for _, c := range data.Channels {
-		if c.BroadcasterLogin == channelName {
+		if c.BroadcasterLogin == env.channelName {
 			return c, nil
 		}
 	}
@@ -207,22 +228,10 @@ func getLive(env *Env, token *Token, channel *Channel) (*Live, error) {
 func getOldLiveTime(env *Env, live *Live) (string, error) {
 	fmt.Println("配信時間取得")
 
-	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
-	clientOptions := options.Client().
-		ApplyURI(env.mongodbUri).
-		SetServerAPIOptions(serverAPIOptions)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	client, err := mongo.Connect(ctx, clientOptions)
-	if err != nil {
-		return "", err
-	}
-	defer client.Disconnect(ctx)
-
 	coll := client.Database("jrb").Collection("liveInfo")
 	var data Data
 	filter := bson.D{{"userId", 1}}
-	err = coll.FindOne(context.TODO(), filter).Decode(&data)
+	err := coll.FindOne(context.TODO(), filter).Decode(&data)
 	if err != nil {
 		return "", err
 	}
@@ -342,6 +351,12 @@ func sendMessage(env *Env, live *Live, liveTime string) (err error) {
 
 func HandleRequest(ctx context.Context) (string, err error) {
 	env, err := getEnv()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	err = connection(env)
 	if err != nil {
 		fmt.Println(err)
 		return
