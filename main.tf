@@ -122,12 +122,6 @@ resource "aws_iam_role_policy" "iam_for_lambda" {
   EOF
 }
 
-data "archive_file" "go" {
-  type        = "zip"
-  source_file = "jrb"
-  output_path = "upload.zip"
-}
-
 variable "APP_ENV" {} 
 variable "CLIENT_ID" {} 
 variable "CLIENT_SECRET" {} 
