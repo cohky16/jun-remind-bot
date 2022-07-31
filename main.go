@@ -229,7 +229,7 @@ func getOldLiveTime(env *Env, live *Live) (string, error) {
 	fmt.Println("配信時間取得")
 
 	coll := client.Database("jrb").Collection("liveInfo")
-	if coll == nil {
+	if cnt, _ := coll.CountDocuments(context.TODO(), nil); cnt <= 0 {
 		if err := client.Database("jrb").CreateCollection(context.TODO(), "liveInfo"); err != nil {
 			return "", err
 		}
