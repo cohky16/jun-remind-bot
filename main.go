@@ -80,6 +80,15 @@ type Data struct {
 
 var client *mongo.Client
 
+func Contains(l []string, s string) bool {
+	for e := range l {
+		if e == s {
+			return true
+		}
+	}
+	return false
+}
+
 // 環境変数取得
 func getEnv() (env *Env, err error) {
 	if os.Getenv("APP_ENV") != "production" && os.Getenv("CI_ENV") != "TRUE" {
@@ -229,7 +238,8 @@ func getOldLiveTime(env *Env, live *Live) (string, error) {
 	fmt.Println("配信時間取得")
 
 	coll := client.Database("jrb").Collection("liveInfo")
-	if cnt, _ := coll.CountDocuments(context.TODO(), nil); cnt <= 0 {
+	names, _ := client.Database("jrb").ListCollectionNames(context.TODO(), nil)
+	if Contains(names, "liveInfo") {
 		if err := client.Database("jrb").CreateCollection(context.TODO(), "liveInfo"); err != nil {
 			return "", err
 		}
@@ -238,6 +248,7 @@ func getOldLiveTime(env *Env, live *Live) (string, error) {
 			return "", err
 		}
 	}
+
 	var data Data
 	filter := bson.D{{"userId", 1}}
 	err := coll.FindOne(context.TODO(), filter).Decode(&data)
