@@ -22,6 +22,7 @@ provider "mongodbatlas" {}
 
 variable "MONGODB_ORG_ID" {} 
 variable "MONGODB_API_KEY" {} 
+variable "MONGODB_PASS" {}
 
 resource "mongodbatlas_project" "jrb" {
   name   = "jrb"
@@ -71,6 +72,24 @@ resource "mongodbatlas_cluster" "jrb" {
     }
 }
 
+resource "mongodbatlas_project_ip_access_list" "ip_access_list" {
+  project_id  = mongodbatlas_project.jrb.id
+  cidr_block = "0.0.0.0/0"
+  comment     = "all"
+}
+
+resource "mongodbatlas_database_user" "db_user" {
+  username = "cohky"
+  password = var.MONGODB_PASS
+  project_id = mongodbatlas_project.jrb.id
+  auth_database_name = "admin"
+
+  roles {
+    role_name = "atlasAdmin"
+    database_name = "admin"
+  } 
+}
+
 variable "AWS_ACCESS_KEY_ID" {}
 variable "AWS_SECRET_ACCESS_KEY" {}
 variable "AWS_REGION" {}
@@ -111,11 +130,6 @@ resource "aws_iam_role_policy" "iam_for_lambda" {
     "Statement": [
         {
             "Effect": "Allow",
-            "Action": "logs:CreateLogGroup",
-            "Resource": "arn:aws:logs:ap-northeast-1:${data.aws_caller_identity.current.account_id}:*"
-        },
-        {
-            "Effect": "Allow",
             "Action": [
                 "logs:CreateLogStream",
                 "logs:PutLogEvents"
@@ -152,7 +166,7 @@ resource "aws_lambda_function" "batch_jun_remind" {
       CLIENT_SECRET = var.CLIENT_SECRET
       LINE_CHANNEL_ACCESS_TOKEN = var.LINE_CHANNEL_ACCESS_TOKEN
       LINE_CHANNEL_SECRET = var.LINE_CHANNEL_SECRET
-      MONGODB_URI = var.MONGODB_URI
+      MONGODB_URI = mongodbatlas_cluster.jrb.mongo_uri
     }
   }
 }
