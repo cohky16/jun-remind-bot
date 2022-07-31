@@ -81,7 +81,7 @@ type Data struct {
 var client *mongo.Client
 
 func Contains(l []string, s string) bool {
-	for e := range l {
+	for _, e := range l {
 		if e == s {
 			return true
 		}
