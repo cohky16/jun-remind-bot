@@ -166,7 +166,6 @@ resource "aws_lambda_function" "batch_jun_remind" {
       CLIENT_SECRET = var.CLIENT_SECRET
       LINE_CHANNEL_ACCESS_TOKEN = var.LINE_CHANNEL_ACCESS_TOKEN
       LINE_CHANNEL_SECRET = var.LINE_CHANNEL_SECRET
-      TEST=""
       MONGODB_URI = var.MONGODB_URI
     }
   }
