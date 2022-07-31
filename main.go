@@ -229,6 +229,15 @@ func getOldLiveTime(env *Env, live *Live) (string, error) {
 	fmt.Println("配信時間取得")
 
 	coll := client.Database("jrb").Collection("liveInfo")
+	if coll == nil {
+		if err := client.Database("jrb").CreateCollection(context.TODO(), "liveInfo"); err != nil {
+			return "", err
+		}
+		coll = client.Database("jrb").Collection("liveInfo")
+		if _, err := coll.InsertOne(context.TODO(), bson.D{{"userId", 1}, {"liveTime", "2022/01/01 00:00 開始"}}); err != nil {
+			return "", err
+		}
+	}
 	var data Data
 	filter := bson.D{{"userId", 1}}
 	err := coll.FindOne(context.TODO(), filter).Decode(&data)
