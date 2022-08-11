@@ -148,7 +148,6 @@ variable "CLIENT_ID" {}
 variable "CLIENT_SECRET" {} 
 variable "LINE_CHANNEL_ACCESS_TOKEN" {} 
 variable "LINE_CHANNEL_SECRET" {} 
-variable "MONGODB_URI" {} 
 
 resource "aws_lambda_function" "batch_jun_remind" {
   filename      = "upload.zip"
@@ -166,7 +165,7 @@ resource "aws_lambda_function" "batch_jun_remind" {
       CLIENT_SECRET = var.CLIENT_SECRET
       LINE_CHANNEL_ACCESS_TOKEN = var.LINE_CHANNEL_ACCESS_TOKEN
       LINE_CHANNEL_SECRET = var.LINE_CHANNEL_SECRET
-      MONGODB_URI = var.MONGODB_URI
+      MONGODB_URI = "mongodb+srv://cohky:${var.MONGODB_PASS}@${substr(mongodbatlas_cluster.jrb.connection_strings.0.standard_srv, 14, 100)}/?retryWrites=true&w=majority"
     }
   }
 }
